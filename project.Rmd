@@ -1,0 +1,56 @@
+---
+title: "Machine Learning Project"
+output: html_document
+---
+# Loading data
+```{r, echo=TRUE}
+library(caret)
+library(rpart)
+library(rpart.plot)
+library(RColorBrewer)
+library(rattle)
+library(gbm)
+library(corrplot)
+library(randomForest)
+library(janitor)
+trainingdata <- read.csv("pml-training.csv", na.strings = c("NA", "#DIV/0!", ""))
+testdata <- read.csv("pml-testing.csv", na.strings = c("NA", "#DIV/0!", ""))
+```
+# Removing NAs
+```{r , include=TRUE, echo=TRUE}
+
+```
+# Data partition
+```{r , include=TRUE, echo=TRUE}
+clean <- colSums(is.na(trainingdata))/nrow(trainingdata) < 0.95
+cleantrain <- trainingdata[,clean]
+cleantrain <- cleantrain[,-c(1:7)]
+cleantest <- testdata[,-c(1:7)]
+inTrain <- createDataPartition(cleantrain$classe, p = 0.75)[[1]]
+trainData <- cleantrain[inTrain,]
+testData <- cleantrain[-inTrain,]
+Names <- names(cleantrain)
+cleantest <- testdata[,Names[1:52]]
+```
+
+# Decision Tree
+```{r , include=TRUE, echo=TRUE}
+decisionTreeMod <- train(classe ~., method='rpart', data=trainData)
+decisionTreePrediction <- predict(decisionTreeMod, testData)
+confusionMatrix(testData$classe, decisionTreePrediction)
+```
+# Decision tree plot
+```{r , include=TRUE, echo=TRUE}
+rpart.plot(decisionTreeMod$finalModel)
+```
+# Random Forest
+```{r , include=TRUE, echo=TRUE}
+rfMod <- train(classe ~., method='rf', data=trainData, ntree=128)
+rfPrediction <- predict(rfMod, testData)
+confusionMatrix(testData$classe, rfPrediction)
+```
+# Prediction
+```{r , include=TRUE, echo=TRUE}
+predict(rfMod, cleantest)
+```
+
